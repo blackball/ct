@@ -446,7 +446,7 @@ void
 ct_init(struct ct_t *ct, const IplImage * frame, const CvRect *obj_box) {
     _ct_inithaar( ct, obj_box->width, obj_box->height );
     
-    _ct_sampling_io(frame, obj_box, ct->outer_positive_radius, 0, 100000, ct->positive_box);
+    _ct_sampling_io(frame, obj_box, ct->outer_positive_radius, 0, 1000000, ct->positive_box);
     _ct_sampling_io(frame, obj_box, ct->search_window_radius * 1.5f, ct->outer_positive_radius + 4, 100, ct->negative_box);
 
     ct->integral_img = cvCreateImage(cvSize(frame->width+1, frame->height+1), IPL_DEPTH_32F, 1);
