@@ -1,9 +1,3 @@
-/**
- * Real-time compressive tracker.
- *
- * @blackball (bugway@gmail.com)
- */
-
 #include "ct.h"
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -11,13 +5,13 @@
 #include <float.h>
 #include <math.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif 
 
 #define pow2(v) ((v) * (v))
-
+#define fast_max(x, y) ((x) ^ (((x) ^ (y)) & -((x) < (y))))
+#define fast_min(x, y) ((y) ^ (((x) ^ (y)) & -((x) < (y))))
 /* CT params type */
 struct ct_t {
     int outer_positive_radius;
@@ -41,10 +35,9 @@ struct ct_t {
     IplImage * integral_img; /* move this out in multiple tracking */
 };
 
-/*****************/
+/************/
 static unsigned int _rand_trace = 0;
-static int
-_irand(int min, int max) {
+static int _irand(int min, int max) {
     _rand_trace = 0x00269ec3 + _rand_trace * 0x000343fd;
     return min + ((_rand_trace >> 16) & 0x7FF) % (max - min);
 }
@@ -83,7 +76,6 @@ rvec_clear(rvec_t *v) {
 static void
 rvec_append(rvec_t *v, CvRect t) {
     if (v->used == v->capacity) {
-	/* incremental step was set to the same size of previous */
 	v->data = (CvRect *) realloc (v->data, sizeof(CvRect) * (v->capacity * 2));
     }
     v->data[ v->used++ ] = t; 
@@ -110,16 +102,16 @@ mat_new(int w, int h) {
 
 static void
 mat_realloc(struct mat * m, int nw, int nh) {
-    assert(m);
+	assert(m);
 
     if (m->w == nw && m->h == nh) return ;
     
     if (m) {
-	free(m->data);
-	m->data = (float *)malloc(sizeof(float) * nw * nh);
-	m->w = nw;
-	m->h = nh;
-    } 
+		free(m->data);
+		m->data = (float *)malloc(sizeof(float) * nw * nh);
+		m->w = nw;
+		m->h = nh;
+	} 
 }
 
 static void
@@ -129,9 +121,9 @@ mat_free(struct mat **m) {
     *m = 0;
 }
 
-#define mat_at(m, r, c)				\
+#define mat_at(m, r, c) \
     (*((m->data) + (r) * (m)->w + (c)))
-    
+
 struct wrect_t {
     CvRect r;
     float  w;
@@ -145,6 +137,7 @@ struct wvec_t {
 #define wvec_at(vec, i, j)			\
     ((vec)->rects + (vec)->offsets[i] + j)
 
+/* do not use i++ or ++i here ! */
 #define wvec_step(vec, i)			\
     ((vec)->offsets[i+1] - (vec)->offsets[i])
 
@@ -156,7 +149,7 @@ wvec_new(const int *arr, int num) {
 
     sum = 0;
     for (i = 0; i < num; ++i)
-	sum += arr[i]; 
+        sum += arr[i]; 
 
     sz += sizeof(struct wrect_t) * sum;
 
@@ -166,8 +159,8 @@ wvec_new(const int *arr, int num) {
     
     sum = 0;
     for (i = 0; i < num; ++i) {
-	v->offsets[i] = sum;
-	sum += arr[i];
+        v->offsets[i] = sum;
+        sum += arr[i];
     }
     v->offsets[i] = sum;
     
@@ -195,22 +188,22 @@ _ct_inithaar(struct ct_t * ct, int objw, int objh) {
     cache = (float *)(arr + ct->feature_num);
     
     for (i = 0; i < ct->feature_num; ++i)
-	arr[i] = _irand(ct->feature_rect_num_min, ct->feature_rect_num_max);
+        arr[i] = _irand(ct->feature_rect_num_min, ct->feature_rect_num_max);
     
     for (i = 0; i < rmax - rmin; ++i) 
-	cache[i] = 1.0f / (float)sqrt((float)(i + rmin));
+        cache[i] = 1.0f / (float)sqrt((float)(i + rmin));
     
     ct->features = wvec_new(arr, ct->feature_num);
 
     for (i = 0; i < ct->feature_num; ++i) {
-	for (j = 0; j < arr[i]; ++j) {
-	    struct wrect_t *p = wvec_at(ct->features, i, j);
-	    p->r.x      = _irand(0, objw - 3);
-	    p->r.y      = _irand(0, objh - 3);
-	    p->r.width  = _irand(0, objw - p->r.x - 2);
-	    p->r.height = _irand(0, objh - p->r.y - 2);
-	    p->w = _switch[ _irand(0, 2) ] * cache[arr[i] - rmin];
-	}
+        for (j = 0; j < arr[i]; ++j) {
+            struct wrect_t *p = wvec_at(ct->features, i, j);
+            p->r.x      = _irand(0, objw - 3);
+            p->r.y      = _irand(0, objh - 3);
+            p->r.width  = _irand(0, objw - p->r.x - 2);
+            p->r.height = _irand(0, objh - p->r.y - 2);
+            p->w = _switch[ _irand(0, 2) ] * cache[arr[i] - rmin];
+        }
     }
 
     free( pmem );
@@ -228,7 +221,7 @@ _ct_get_feature_value(const struct ct_t *ct, struct rvec_t * samples, struct mat
     for (i = 0; i < ct->feature_num; ++i) {
 	for (j = 0; j < sample_size; ++j) {
 	    float t = .0f;
-	    int sz = wvec_step(ct->features, i);
+		int sz = wvec_step(ct->features, i);
 	    for (k = 0; k < sz; ++k){
 		CvRect r = samples->data[j];
 		struct wrect_t *wr = wvec_at(ct->features, i, k);
@@ -252,27 +245,27 @@ _ct_sampling(const IplImage *img, const CvRect *obj_box, int swr, struct rvec_t 
     int rowsz = img->height - obj_box->height - 1;
     int squared_radius =  pow2(swr);
 
-    int minrow = max(0, obj_box->y - swr);
-    int maxrow = min(rowsz - 1, obj_box->y + swr);
-    int mincol = max(0, obj_box->x - swr);
-    int maxcol = min(colsz - 1, obj_box->x + swr);
+    int minrow = fast_max(0, obj_box->y - swr);
+    int maxrow = fast_min(rowsz - 1, obj_box->y + swr);
+    int mincol = fast_max(0, obj_box->x - swr);
+    int maxcol = fast_min(colsz - 1, obj_box->x + swr);
     int r,c;
     
     rvec_clear(samples);
     
     for (r = minrow; r <= maxrow; ++r) {
-	for (c = mincol; c <= maxcol; ++c) {
-	    int dist = pow2( obj_box->y - r ) + pow2( obj_box->x - c );
-	    if ( dist < squared_radius ) {
-		CvRect rt;
-		rt.x = c;
-		rt.y = r;
-		rt.width  = obj_box->width;
-		rt.height = obj_box->height;
+        for (c = mincol; c <= maxcol; ++c) {
+            int dist = pow2( obj_box->y - r ) + pow2( obj_box->x - c );
+            if ( dist < squared_radius ) {
+                CvRect rt;
+                rt.x = c;
+                rt.y = r;
+                rt.width  = obj_box->width;
+                rt.height = obj_box->height;
                 
-		rvec_append(samples, rt);
-	    }
-	}
+                rvec_append(samples, rt);
+            }
+        }
     }
 }
 
@@ -286,10 +279,10 @@ _ct_sampling_io(const IplImage *img, const CvRect *obj_box, int inner_radius, in
     int outer_squared_radius = pow2(outer_radius);
 
     
-    int minrow = max(0, obj_box->y - inner_radius);
-    int maxrow = min(rowsz - 1, obj_box->y + inner_radius);
-    int mincol = max(0, obj_box->x - inner_radius);
-    int maxcol = min(colsz - 1, obj_box->x + inner_radius);
+    int minrow = fast_max(0, obj_box->y - inner_radius);
+    int maxrow = fast_min(rowsz - 1, obj_box->y + inner_radius);
+    int mincol = fast_max(0, obj_box->x - inner_radius);
+    int maxcol = fast_min(colsz - 1, obj_box->x + inner_radius);
     int r,c, i = 0;
     int area = (maxrow - minrow + 1) * (maxcol - mincol + 1);
     
@@ -299,13 +292,13 @@ _ct_sampling_io(const IplImage *img, const CvRect *obj_box, int inner_radius, in
 	    int dist = pow2( obj_box->y - r ) + pow2( obj_box->x - c );
 	    if ( _irand(0, area) < max_sample_num && dist < inner_squared_radius &&
 		 dist > outer_squared_radius) {
-		CvRect rt;
-		rt.x = c;
-		rt.y = r;
-		rt.width  = obj_box->width;
-		rt.height = obj_box->height;
+				CvRect rt;
+                rt.x = c;
+                rt.y = r;
+                rt.width  = obj_box->width;
+                rt.height = obj_box->height;
                 
-		rvec_append(samples, rt);
+                rvec_append(samples, rt);
 	    }
 	}
     }
@@ -328,7 +321,7 @@ _row_mean_std_dev(const float *vec, int len, float *mean, float *stddev) {
 	sum += (vec[i] - tmean) * (vec[i] - tmean);
 
     *stddev = (float)sqrt( sum / (len - 1));
-    *mean = tmean;
+	*mean = tmean;
 }
 
 static void
@@ -340,7 +333,7 @@ _ct_update_classifier(const struct mat *sample_value, float *mu, float *sigma, i
 	_row_mean_std_dev(&mat_at(sample_value, i, 0), sample_value->w, &tmu, &tsigma);
 
 	sigma[i] = (float)sqrt(learning_rate * sigma[i] * sigma[i] + (1.0f-learning_rate) * tsigma * tsigma 
-			       + learning_rate * (1.0f - learning_rate) * (mu[i] - tmu) * (mu[i]-tmu));
+			+ learning_rate * (1.0f - learning_rate) * (mu[i] - tmu) * (mu[i]-tmu));
 	mu[i] = mu[i] * learning_rate + (1.0f-learning_rate) * tmu;
     }
 }
@@ -350,17 +343,17 @@ _ct_ratio_classifier(const struct ct_t *ct, int * ratio_max_idx, float * ratio_m
     float sum_ratio;
     int i, j, sample_num, feature_num = ct->feature_num;
     struct mat * pm = ct->detect_values;
-    int idx = 0;
-    float rmax = -FLT_MAX;
-    const float * sigma_pos = ct->sigma_positive;
-    const float * sigma_neg = ct->sigma_negative;
-    const float * mu_pos    = ct->mu_positive;
-    const float * mu_neg    = ct->mu_negative;
+	int idx = 0;
+	float rmax = -FLT_MAX;
+	const float * sigma_pos = ct->sigma_positive;
+	const float * sigma_neg = ct->sigma_negative;
+	const float * mu_pos    = ct->mu_positive;
+	const float * mu_neg    = ct->mu_negative;
     sample_num = pm->w;
 	
     for (j = 0; j < sample_num; ++j) {
 	sum_ratio = 0.0f;
-	for (i = 0; i < feature_num; ++i) {		
+	for (i = 0; i < feature_num; ++i) {
 	    float tp = mat_at(pm, i, j) - mu_pos[i], tn = mat_at(pm, i, j) - mu_neg[i];
 	    tp = (float)exp( pow2( tp ) / (-2.0f * pow2( sigma_pos[i] + FLT_EPSILON))) / (sigma_pos[i] + FLT_EPSILON);
 	    tn = (float)exp( pow2( tn ) / (-2.0f * pow2( sigma_neg[i] + FLT_EPSILON))) / (sigma_neg[i] + FLT_EPSILON);
@@ -371,11 +364,11 @@ _ct_ratio_classifier(const struct ct_t *ct, int * ratio_max_idx, float * ratio_m
 	    rmax = sum_ratio;
 	}
     }
-    *ratio_max_idx = idx;
-    *ratio_max = rmax;
+	*ratio_max_idx = idx;
+	*ratio_max = rmax;
 }
 
-/**************************/
+/************/
 
 #define vec_set(vec, vec_len, value)		\
     do{						\
@@ -407,12 +400,12 @@ ct_new() {
     ct->negative_values = mat_new(1,1);
 
     /* initialize */
-    vec_set(ct->mu_positive, ct->feature_num, 0.0f);
-    vec_set(ct->mu_negative, ct->feature_num, 0.0f);
+	vec_set(ct->mu_positive, ct->feature_num, 0.0f);
+	vec_set(ct->mu_negative, ct->feature_num, 0.0f);
     vec_set(ct->sigma_positive, ct->feature_num, 1.0f);
     vec_set(ct->sigma_negative, ct->feature_num, 1.0f);
 
-    return ct;
+	return ct;
 }
 #undef vec_set
 
@@ -423,7 +416,8 @@ ct_free(struct ct_t **ct) {
     
     p = *ct;
     
-#define _safe_free(f, p) f((p) == 0 ? 0 : &(p))    
+#define _safe_free(f, p)			\
+    f((p) == 0 ? 0 : &(p))
     _safe_free(free, *p->mu_positive);
     _safe_free(free, *p->mu_negative);
     _safe_free(free, *p->sigma_positive);
@@ -436,17 +430,18 @@ ct_free(struct ct_t **ct) {
     _safe_free(mat_free, p->positive_values);
     _safe_free(mat_free, p->negative_values);
     _safe_free(cvReleaseImage, p->integral_img);
-#undef _safe_free
     
-    free(*ct);
+	free(*ct);
     *ct = 0;
+
+#undef _safe_free
 }
 
 void
 ct_init(struct ct_t *ct, const IplImage * frame, const CvRect *obj_box) {
     _ct_inithaar( ct, obj_box->width, obj_box->height );
-    
-    _ct_sampling_io(frame, obj_box, ct->outer_positive_radius, 0, 1000000, ct->positive_box);
+
+    _ct_sampling_io(frame, obj_box, ct->outer_positive_radius, 0, 100000, ct->positive_box);
     _ct_sampling_io(frame, obj_box, ct->search_window_radius * 1.5f, ct->outer_positive_radius + 4, 100, ct->negative_box);
 
     ct->integral_img = cvCreateImage(cvSize(frame->width+1, frame->height+1), IPL_DEPTH_32F, 1);

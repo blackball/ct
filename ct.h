@@ -1,11 +1,3 @@
-/**
- * Real-time compressive tracker, implemented in C.
- * 
- * Real-Time Compressive Tracking, K Zhang et al. ECCV 2012
- * 
- * @blackball (bugway@gmail.com)
- */
-
 #ifndef CT_H
 #define CT_H
 
@@ -18,12 +10,12 @@ typedef struct CvRect CvRect;
 
 struct ct_t;
 struct ct_t * ct_new();
+void ct_free(struct ct_t **ct);
 void ct_init(struct ct_t *ct, const IplImage *gray, const CvRect *obj_box);
 void ct_update(struct ct_t *ct, const IplImage *gray, CvRect *obj_box);
-void ct_free(struct ct_t **ct);
-    
+
 #ifdef __cplusplus
 }
-#endif
+#endif 
 
 #endif 

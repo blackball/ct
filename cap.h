@@ -1,5 +1,5 @@
 /**
- * A simple warpper for CvCapture in C++.
+ * A simple warpper for Capture in C++.
  *
  * @blackball
  */
