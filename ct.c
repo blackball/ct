@@ -360,18 +360,11 @@ _ct_ratio_classifier(const struct ct_t *ct, int * ratio_max_idx, float * ratio_m
 	
     for (j = 0; j < sample_num; ++j) {
 	sum_ratio = 0.0f;
-	for (i = 0; i < feature_num; ++i) {
-		
-	    float tpos, tneg;
-	    tpos = exp( (mat_at(pm,i,j)-mu_pos[i])*(mat_at(pm,i,j)-mu_pos[i]) / -(2.0f*sigma_pos[i]*sigma_pos[i]+1e-30) ) / (sigma_pos[i]+1e-30);
-	    tneg = exp( (mat_at(pm,i,j)-mu_neg[i])*(mat_at(pm,i,j)-mu_neg[i]) / -(2.0f*sigma_neg[i]*sigma_neg[i]+1e-30) ) / (sigma_neg[i]+1e-30);
-	    sum_ratio += log(tpos+1e-30) - log(tneg+1e-30);	// equation 4
-	    /*
-	      float tp = mat_at(pm, i, j) - mu_pos[i], tn = mat_at(pm, i, j) - mu_neg[i];
-	      tp = (float)exp( pow2( tp ) / (-2.0f * pow2( sigma_pos[i] + FLT_EPSILON))) / (sigma_pos[i] + FLT_EPSILON);
-	      tn = (float)exp( pow2( tn ) / (-2.0f * pow2( sigma_neg[i] + FLT_EPSILON))) / (sigma_neg[i] + FLT_EPSILON);
-	      sum_ratio += (float)(log (tp) - log(tn));
-	    */
+	for (i = 0; i < feature_num; ++i) {		
+	    float tp = mat_at(pm, i, j) - mu_pos[i], tn = mat_at(pm, i, j) - mu_neg[i];
+	    tp = (float)exp( pow2( tp ) / (-2.0f * pow2( sigma_pos[i] + FLT_EPSILON))) / (sigma_pos[i] + FLT_EPSILON);
+	    tn = (float)exp( pow2( tn ) / (-2.0f * pow2( sigma_neg[i] + FLT_EPSILON))) / (sigma_neg[i] + FLT_EPSILON);
+	    sum_ratio += (float)(log (tp) - log(tn));
 	}
 	if (rmax < sum_ratio) {
 	    idx = j;
