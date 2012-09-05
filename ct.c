@@ -487,5 +487,5 @@ ct_update(struct ct_t *ct, const IplImage * frame, CvRect *obj_box) {
 }
 
 #ifdef __cplusplus
-extern "C" {
+}
 #endif 
