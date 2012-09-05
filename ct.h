@@ -10,9 +10,9 @@ typedef struct CvRect CvRect;
 
 struct ct_t;
 struct ct_t * ct_new();
-void ct_free(struct ct_t **ct);
 void ct_init(struct ct_t *ct, const IplImage *gray, const CvRect *obj_box);
 void ct_update(struct ct_t *ct, const IplImage *gray, CvRect *obj_box);
+void ct_free(struct ct_t **ct);
 
 #ifdef __cplusplus
 }
