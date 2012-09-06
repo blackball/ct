@@ -178,6 +178,6 @@ _test_video_multiple(const char *vname) {
 
 int main(int argc ,char *argv) {
 
-    test_video_multiple("D:\\video_dataset\\classroom_video\\classroom.wmv");
+    _test_video_multiple("D:\\video_dataset\\classroom_video\\classroom.wmv");
     return 0;
 }
