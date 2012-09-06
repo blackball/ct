@@ -1,7 +1,7 @@
 ## Real-time compressive tracker, implemented in C.
 ====
 
-# Usage
+### Usage
 ```
 struct ct_t * ct = ct_new(); /* create tracker's parameters */
 CvRect obj_box;
@@ -13,7 +13,7 @@ while ( gray = <<<query_gray_frame>>> ) {
 ct_free(&ct); /* free all resources */
 ```
 
-# Note
+### Note
 
 * real-time, for at least 3 targets tracking, in a normal people's PC,
    and in my computer, it could track 10 targets in real time.
@@ -21,8 +21,7 @@ ct_free(&ct); /* free all resources */
 
 I did not give an accurate check between this version and  the original version, If there's a bug, feel free to contact me or send a push request.
 
-blackball
 bugway@gmail.com
 
-# Reference
+### Reference
 [0] "Real-Time Compressive Tracking," Kaihua Zhang, Lei Zhang, Ming-Hsuan Yang, ECCV 2012
