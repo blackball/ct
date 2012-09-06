@@ -1,3 +1,7 @@
+/**
+ * Tracking single object in video.
+ */
+
 #include "cap.h"
 #include "ct.h"
 #include <opencv/cv.h>
