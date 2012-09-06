@@ -5,6 +5,7 @@
 #include <float.h>
 #include <math.h>
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif 
@@ -12,6 +13,7 @@ extern "C" {
 #define pow2(v) ((v) * (v))
 #define fast_max(x, y) ((x) ^ (((x) ^ (y)) & -((x) < (y))))
 #define fast_min(x, y) ((y) ^ (((x) ^ (y)) & -((x) < (y))))
+
 /* CT params type */
 struct ct_t {
     int outer_positive_radius;
@@ -102,16 +104,14 @@ mat_new(int w, int h) {
 
 static void
 mat_realloc(struct mat * m, int nw, int nh) {
-	assert(m);
-
-    if (m->w == nw && m->h == nh) return ;
+    if (m && m->w == nw && m->h == nh) return ;
     
     if (m) {
-		free(m->data);
-		m->data = (float *)malloc(sizeof(float) * nw * nh);
-		m->w = nw;
-		m->h = nh;
-	} 
+        free(m->data);
+        m->data = (float *)malloc(sizeof(float) * nw * nh);
+        m->w = nw;
+        m->h = nh;
+    } 
 }
 
 static void
@@ -121,7 +121,7 @@ mat_free(struct mat **m) {
     *m = 0;
 }
 
-#define mat_at(m, r, c) \
+#define mat_at(m, r, c)                         \
     (*((m->data) + (r) * (m)->w + (c)))
 
 struct wrect_t {
@@ -184,7 +184,6 @@ _ct_inithaar(struct ct_t * ct, int objw, int objh) {
     float *cache;
 
     arr = (int*)pmem;
-
     cache = (float *)(arr + ct->feature_num);
     
     for (i = 0; i < ct->feature_num; ++i)
@@ -221,7 +220,7 @@ _ct_get_feature_value(const struct ct_t *ct, struct rvec_t * samples, struct mat
     for (i = 0; i < ct->feature_num; ++i) {
 	for (j = 0; j < sample_size; ++j) {
 	    float t = .0f;
-		int sz = wvec_step(ct->features, i);
+            int sz = wvec_step(ct->features, i);
 	    for (k = 0; k < sz; ++k){
 		CvRect r = samples->data[j];
 		struct wrect_t *wr = wvec_at(ct->features, i, k);
@@ -292,7 +291,7 @@ _ct_sampling_io(const IplImage *img, const CvRect *obj_box, int inner_radius, in
 	    int dist = pow2( obj_box->y - r ) + pow2( obj_box->x - c );
 	    if ( _irand(0, area) < max_sample_num && dist < inner_squared_radius &&
 		 dist > outer_squared_radius) {
-				CvRect rt;
+                CvRect rt;
                 rt.x = c;
                 rt.y = r;
                 rt.width  = obj_box->width;
@@ -321,7 +320,7 @@ _row_mean_std_dev(const float *vec, int len, float *mean, float *stddev) {
 	sum += (vec[i] - tmean) * (vec[i] - tmean);
 
     *stddev = (float)sqrt( sum / (len - 1));
-	*mean = tmean;
+    *mean = tmean;
 }
 
 static void
@@ -333,7 +332,7 @@ _ct_update_classifier(const struct mat *sample_value, float *mu, float *sigma, i
 	_row_mean_std_dev(&mat_at(sample_value, i, 0), sample_value->w, &tmu, &tsigma);
 
 	sigma[i] = (float)sqrt(learning_rate * sigma[i] * sigma[i] + (1.0f-learning_rate) * tsigma * tsigma 
-			+ learning_rate * (1.0f - learning_rate) * (mu[i] - tmu) * (mu[i]-tmu));
+                               + learning_rate * (1.0f - learning_rate) * (mu[i] - tmu) * (mu[i]-tmu));
 	mu[i] = mu[i] * learning_rate + (1.0f-learning_rate) * tmu;
     }
 }
@@ -343,12 +342,12 @@ _ct_ratio_classifier(const struct ct_t *ct, int * ratio_max_idx, float * ratio_m
     float sum_ratio;
     int i, j, sample_num, feature_num = ct->feature_num;
     struct mat * pm = ct->detect_values;
-	int idx = 0;
-	float rmax = -FLT_MAX;
-	const float * sigma_pos = ct->sigma_positive;
-	const float * sigma_neg = ct->sigma_negative;
-	const float * mu_pos    = ct->mu_positive;
-	const float * mu_neg    = ct->mu_negative;
+    int idx = 0;
+    float rmax = -FLT_MAX;
+    const float * sigma_pos = ct->sigma_positive;
+    const float * sigma_neg = ct->sigma_negative;
+    const float * mu_pos    = ct->mu_positive;
+    const float * mu_neg    = ct->mu_negative;
     sample_num = pm->w;
 	
     for (j = 0; j < sample_num; ++j) {
@@ -364,8 +363,8 @@ _ct_ratio_classifier(const struct ct_t *ct, int * ratio_max_idx, float * ratio_m
 	    rmax = sum_ratio;
 	}
     }
-	*ratio_max_idx = idx;
-	*ratio_max = rmax;
+    *ratio_max_idx = idx;
+    *ratio_max = rmax;
 }
 
 /************/
@@ -400,12 +399,12 @@ ct_new() {
     ct->negative_values = mat_new(1,1);
 
     /* initialize */
-	vec_set(ct->mu_positive, ct->feature_num, 0.0f);
-	vec_set(ct->mu_negative, ct->feature_num, 0.0f);
+    vec_set(ct->mu_positive, ct->feature_num, 0.0f);
+    vec_set(ct->mu_negative, ct->feature_num, 0.0f);
     vec_set(ct->sigma_positive, ct->feature_num, 1.0f);
     vec_set(ct->sigma_negative, ct->feature_num, 1.0f);
 
-	return ct;
+    return ct;
 }
 #undef vec_set
 
@@ -431,7 +430,7 @@ ct_free(struct ct_t **ct) {
     _safe_free(mat_free, p->negative_values);
     _safe_free(cvReleaseImage, p->integral_img);
     
-	free(*ct);
+    free(*ct);
     *ct = 0;
 
 #undef _safe_free
