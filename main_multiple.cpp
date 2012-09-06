@@ -153,7 +153,7 @@ _test_video_multiple(const char *vname) {
 #define _draw(f, r)						\
 	cvRectangle(f, cvPoint((r).x, (r).y),			\
 		    cvPoint((r).x+(r).width, (r).y+(r).height), \
-		    cvScalar(255,0,0,0), 2,8,0)
+		    cvScalar(0,255,0,0), 2,8,0)
 	
 	for (i = 0; i < n; ++i) {
 	    ct_update(pcts[i], gray, &objects[i]);
