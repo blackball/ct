@@ -25,7 +25,10 @@ public:
     }
     IplImage * nextImg(int color_or_gray ) {
 	if (!m_fp) return NULL;
-	if (m_img) cvReleaseImage( &m_img );
+	if (m_img) {
+	    cvReleaseImage( &m_img );
+	    m_img = NULL;
+	}
 
 	if (1 == fscanf(m_fp, "%s", m_name)) {
 	    m_img = cvLoadImage(m_name, color_or_gray & 0x1 );
