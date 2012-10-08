@@ -7,11 +7,11 @@
 
 CvRect obj_box;
 
-gray = <<<query_gray_frame>>>;
+gray = query_gray_frame();
 
 ct_init(ct, gray, &obj_box); /* initialize by the bounding box in first frame */
 
-while ( gray = <<<query_gray_frame>>> ) {
+while ( gray = query_gray_frame() ) {
 
       ct_update(ct, gray, &obj_box); /* update, the obj_box contains new boudning box*/
 
