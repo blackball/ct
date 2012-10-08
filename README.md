@@ -2,8 +2,8 @@
 ====
 
 ### Usage
-<p>
-<code> struct ct_t * ct = ct_new(); /* create tracker's parameters */
+```
+struct ct_t * ct = ct_new(); /* create tracker's parameters */
 
 CvRect obj_box;
 
@@ -18,8 +18,7 @@ while ( gray = query_gray_frame() ) {
 }
 
 ct_free(&ct); /* free all resources */
-</code>
-</p>
+```
 
 ### Note
 
