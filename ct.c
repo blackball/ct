@@ -39,7 +39,8 @@ struct ct_t {
 
 /************/
 static unsigned int _rand_trace = 0;
-static int _irand(int min, int max) {
+static int
+_irand(int min, int max) {
     _rand_trace = 0x00269ec3 + _rand_trace * 0x000343fd;
     return min + ((_rand_trace >> 16) & 0x7FF) % (max - min);
 }
@@ -53,8 +54,8 @@ typedef struct rvec_t {
 static rvec_t *
 rvec_new(int n) {
     rvec_t * v = (rvec_t *) malloc (sizeof(rvec_t));
-    v->data   = (CvRect *) malloc (sizeof(CvRect) * n);
-    v->used   = 0;
+    v->data = (CvRect *) malloc (sizeof(CvRect) * n);
+    v->used = 0;
     v->capacity = n;
     return v;
 }
